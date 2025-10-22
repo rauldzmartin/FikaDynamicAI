@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+
+    <OutputType>Library</OutputType>
+    <RootNamespace>FikaDynamicAI</RootNamespace>
+    <AssemblyName>FikaDynamicAI</AssemblyName>
+
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable> <!-- or enable, if you prefer -->
+  </PropertyGroup>
+
+  <!-- References to external DLLs -->
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>References\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>References\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>References\BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="Comfort">
+      <HintPath>References\Comfort.dll</HintPath>
+    </Reference>
+    <Reference Include="spt-reflection">
+      <HintPath>References\spt-reflection.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>References\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>References\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>References\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+	<Reference Include="Fika.Core">
+		<HintPath>References\Fika.Core.dll</HintPath>
+	</Reference>
+  </ItemGroup>
+
+  <!-- Optional: keep App.config if you still use it -->
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+
+</Project>
