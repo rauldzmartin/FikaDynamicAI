@@ -2,49 +2,74 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-
     <OutputType>Library</OutputType>
     <RootNamespace>FikaDynamicAI</RootNamespace>
     <AssemblyName>FikaDynamicAI</AssemblyName>
-
     <LangVersion>latest</LangVersion>
-    <Nullable>disable</Nullable> <!-- or enable, if you prefer -->
+    <Nullable>disable</Nullable>
+    
+    <!-- Local SPT Installation Path -->
+    <GamePath>X:\SPT4 DEV\</GamePath>
+    <ManagedPath>$(GamePath)EscapeFromTarkov_Data\Managed\</ManagedPath>
+    <BepInExPath>$(GamePath)BepInEx\</BepInExPath>
+    
+    <!-- Output Config -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
-  <!-- References to external DLLs -->
+  <!-- Auto-deploy after build -->
+  <Target Name="DeployToPlugins" AfterTargets="Build" Condition="Exists('$(GamePath)')">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BepInExPath)plugins\" SkipUnchangedFiles="true" />
+    <Message Text="Deployed $(TargetFileName) to $(BepInExPath)plugins\" Importance="high" />
+  </Target>
+
   <ItemGroup>
+    <!-- BepInEx Core -->
     <Reference Include="0Harmony">
-      <HintPath>References\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>References\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(BepInExPath)core\0Harmony.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>References\BepInEx.dll</HintPath>
+      <HintPath>$(BepInExPath)core\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- SPT Assemblies -->
+    <Reference Include="spt-reflection">
+      <HintPath>$(BepInExPath)plugins\spt\spt-reflection.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- Fika -->
+    <Reference Include="Fika.Core">
+      <HintPath>$(BepInExPath)plugins\Fika\Fika.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- Game Assemblies -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedPath)Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Comfort">
-      <HintPath>References\Comfort.dll</HintPath>
+      <HintPath>$(ManagedPath)Comfort.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="spt-reflection">
-      <HintPath>References\spt-reflection.dll</HintPath>
-    </Reference>
+    
+    <!-- Unity -->
     <Reference Include="UnityEngine">
-      <HintPath>References\UnityEngine.dll</HintPath>
+      <HintPath>$(ManagedPath)UnityEngine.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>References\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(ManagedPath)UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>References\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>$(ManagedPath)UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-	<Reference Include="Fika.Core">
-		<HintPath>References\Fika.Core.dll</HintPath>
-	</Reference>
-  </ItemGroup>
-
-  <!-- Optional: keep App.config if you still use it -->
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
 
 </Project>

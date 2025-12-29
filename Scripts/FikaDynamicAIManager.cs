@@ -94,25 +94,87 @@ public class FikaDynamicAIManager : MonoBehaviour
             return;
         }
 
-        if (botOwner.IsRole(WildSpawnType.exUsec))
+        // Check if this bot type should be affected by Dynamic AI
+        if (!ShouldTrackBot(botOwner))
         {
             return;
-        }
-
-        if (botOwner.IsRole(WildSpawnType.shooterBTR))
-        {
-            return;
-        }
-
-        if (FikaDynamicAI_Plugin.DynamicAIIgnoreSnipers.Value)
-        {
-            if (botOwner.IsRole(WildSpawnType.marksman))
-            {
-                return;
-            }
         }
 
         _bots.Add((FikaBot)botOwner.GetPlayer);
+    }
+
+    /// <summary>
+    /// Determines if a bot should be tracked and affected by Dynamic AI based on its role and config settings.
+    /// </summary>
+    private bool ShouldTrackBot(BotOwner botOwner)
+    {
+        WildSpawnType role = botOwner.Profile.Info.Settings.Role;
+
+        // BTR shooter is never affected - would break BTR mechanics
+        if (role == WildSpawnType.shooterBTR)
+        {
+            return false;
+        }
+
+        return role switch
+        {
+            // Regular Scavs
+            WildSpawnType.assault or
+            WildSpawnType.cursedAssault or
+            WildSpawnType.assaultGroup => FikaDynamicAI_Plugin.AffectScavs.Value,
+
+            // Sniper Scavs
+            WildSpawnType.marksman => FikaDynamicAI_Plugin.AffectSnipers.Value,
+
+            // Rogues (Lighthouse)
+            WildSpawnType.exUsec => FikaDynamicAI_Plugin.AffectRogues.Value,
+
+            // Raiders (Labs, Reserve)
+            WildSpawnType.pmcBot => FikaDynamicAI_Plugin.AffectRaiders.Value,
+
+            // PMCs
+            WildSpawnType.pmcUSEC or
+            WildSpawnType.pmcBEAR => FikaDynamicAI_Plugin.AffectPMCs.Value,
+
+            // Cultists
+            WildSpawnType.sectantPriest or
+            WildSpawnType.sectantWarrior => FikaDynamicAI_Plugin.AffectCultists.Value,
+
+            // Bosses
+            WildSpawnType.bossKnight or
+            WildSpawnType.bossBully or
+            WildSpawnType.bossKilla or
+            WildSpawnType.bossKojaniy or
+            WildSpawnType.bossSanitar or
+            WildSpawnType.bossTagilla or
+            WildSpawnType.bossGluhar or
+            WildSpawnType.bossZryachiy or
+            WildSpawnType.bossKolontay or
+            WildSpawnType.bossPartisan or
+            WildSpawnType.bossBoar or
+            WildSpawnType.bossBoarSniper => FikaDynamicAI_Plugin.AffectBosses.Value,
+
+            // Boss followers/guards
+            WildSpawnType.followerBully or
+            WildSpawnType.followerKojaniy or
+            WildSpawnType.followerSanitar or
+            WildSpawnType.followerTagilla or
+            WildSpawnType.followerGluharAssault or
+            WildSpawnType.followerGluharScout or
+            WildSpawnType.followerGluharSecurity or
+            WildSpawnType.followerGluharSnipe or
+            WildSpawnType.followerBigPipe or
+            WildSpawnType.followerBirdEye or
+            WildSpawnType.followerZryachiy or
+            WildSpawnType.followerBoar or
+            WildSpawnType.followerBoarClose1 or
+            WildSpawnType.followerBoarClose2 or
+            WildSpawnType.followerKolontayAssault or
+            WildSpawnType.followerKolontaySecurity => FikaDynamicAI_Plugin.AffectFollowers.Value,
+
+            // Default: track anything else
+            _ => true
+        };
     }
 
     protected void Update()
