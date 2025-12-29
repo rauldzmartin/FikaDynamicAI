@@ -179,6 +179,16 @@ public class FikaDynamicAIManager : MonoBehaviour
 
     protected void Update()
     {
+        // If map is disabled via config, ensure all bots are active and do nothing else
+        if (!IsMapEnabled())
+        {
+            if (_disabledBots.Count > 0)
+            {
+                EnabledChange(false); // Activates all disabled bots
+            }
+            return;
+        }
+
         _frameCounter++;
 
         if (_frameCounter % _resetCounter == 0)
@@ -189,6 +199,27 @@ public class FikaDynamicAIManager : MonoBehaviour
                 CheckForPlayers(bot);
             }
         }
+    }
+
+    private bool IsMapEnabled()
+    {
+        // Get current map ID (lowercase for simpler matching)
+        string locationId = Singleton<GameWorld>.Instance.LocationId.ToLower();
+
+        return locationId switch
+        {
+            "factory4_day" or "factory4_night" => FikaDynamicAI_Plugin.EnableFactory.Value,
+            "bigmap" => FikaDynamicAI_Plugin.EnableCustoms.Value,
+            "woods" => FikaDynamicAI_Plugin.EnableWoods.Value,
+            "shoreline" => FikaDynamicAI_Plugin.EnableShoreline.Value,
+            "interchange" => FikaDynamicAI_Plugin.EnableInterchange.Value,
+            "rezervbase" => FikaDynamicAI_Plugin.EnableReserve.Value,
+            "lighthouse" => FikaDynamicAI_Plugin.EnableLighthouse.Value,
+            "tarkovstreets" => FikaDynamicAI_Plugin.EnableStreets.Value,
+            "sandbox" => FikaDynamicAI_Plugin.EnableGroundZero.Value,
+            "laboratory" => FikaDynamicAI_Plugin.EnableLabs.Value,
+            _ => true // Default to enabled for modded/unknown maps
+        };
     }
 
     public void AddHumans()

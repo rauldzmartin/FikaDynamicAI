@@ -27,6 +27,18 @@ internal class FikaDynamicAI_Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> AffectSnipers { get; set; }
     public static ConfigEntry<bool> AffectFollowers { get; set; }
 
+    // Map Settings
+    public static ConfigEntry<bool> EnableFactory { get; set; }
+    public static ConfigEntry<bool> EnableCustoms { get; set; }
+    public static ConfigEntry<bool> EnableWoods { get; set; }
+    public static ConfigEntry<bool> EnableShoreline { get; set; }
+    public static ConfigEntry<bool> EnableInterchange { get; set; }
+    public static ConfigEntry<bool> EnableReserve { get; set; }
+    public static ConfigEntry<bool> EnableLighthouse { get; set; }
+    public static ConfigEntry<bool> EnableStreets { get; set; }
+    public static ConfigEntry<bool> EnableGroundZero { get; set; }
+    public static ConfigEntry<bool> EnableLabs { get; set; }
+
     internal static void DynamicAIRate_SettingChanged(object sender, EventArgs e)
     {
         if (FikaDynamicAIManager.Instance != null)
@@ -85,6 +97,19 @@ internal class FikaDynamicAI_Plugin : BaseUnityPlugin
         AffectBosses.SettingChanged += BotTypeFilter_SettingChanged;
         AffectSnipers.SettingChanged += BotTypeFilter_SettingChanged;
         AffectFollowers.SettingChanged += BotTypeFilter_SettingChanged;
+
+        // Map Settings
+        const string mapHeader = "3. Map Filtering";
+        EnableFactory = Config.Bind(mapHeader, "Factory", true, "Enable Dynamic AI on Factory");
+        EnableCustoms = Config.Bind(mapHeader, "Customs", true, "Enable Dynamic AI on Customs");
+        EnableWoods = Config.Bind(mapHeader, "Woods", true, "Enable Dynamic AI on Woods");
+        EnableShoreline = Config.Bind(mapHeader, "Shoreline", true, "Enable Dynamic AI on Shoreline");
+        EnableInterchange = Config.Bind(mapHeader, "Interchange", true, "Enable Dynamic AI on Interchange");
+        EnableReserve = Config.Bind(mapHeader, "Reserve", true, "Enable Dynamic AI on Reserve");
+        EnableLighthouse = Config.Bind(mapHeader, "Lighthouse", true, "Enable Dynamic AI on Lighthouse");
+        EnableStreets = Config.Bind(mapHeader, "Streets", true, "Enable Dynamic AI on Streets");
+        EnableGroundZero = Config.Bind(mapHeader, "Ground Zero", true, "Enable Dynamic AI on Ground Zero");
+        EnableLabs = Config.Bind(mapHeader, "Labs", true, "Enable Dynamic AI on Labs");
 
         new BotsController_SetSettings_Postfix().Enable();
         new BotsEventsController_SpawnAction_Postfix().Enable();
