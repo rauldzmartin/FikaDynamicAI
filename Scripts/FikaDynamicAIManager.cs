@@ -17,8 +17,7 @@ public class FikaDynamicAIManager : MonoBehaviour
 
     private readonly ManualLogSource _logger = BepInEx.Logging.Logger.CreateLogSource("DynamicAI");
     private CoopHandler _coopHandler;
-    private int _frameCounter;
-    private int _resetCounter;
+    private float _rateMultiplier = 1.0f;
     private readonly List<FikaPlayer> _humanPlayers = [];
     private readonly List<FikaBot> _bots = [];
     private readonly HashSet<FikaBot> _disabledBots = [];
@@ -47,13 +46,8 @@ public class FikaDynamicAIManager : MonoBehaviour
         // This avoids string allocations and switch logic in the Update loop.
         SetupMapConfigs();
 
-        _resetCounter = FikaDynamicAI_Plugin.DynamicAIRate.Value switch
-        {
-            FikaDynamicAI_Plugin.EDynamicAIRates.Low => 600,
-            FikaDynamicAI_Plugin.EDynamicAIRates.Medium => 300,
-            FikaDynamicAI_Plugin.EDynamicAIRates.High => 120,
-            _ => 300,
-        };
+        // Initialize multiplier
+        RateChanged(FikaDynamicAI_Plugin.DynamicAIRate.Value);
 
         _spawner = Singleton<IBotGame>.Instance.BotsController.BotSpawner;
         if (_spawner == null)
@@ -141,17 +135,82 @@ public class FikaDynamicAIManager : MonoBehaviour
     }
 
 
-    private void Spawner_OnBotRemoved(BotOwner botOwner)
+    // Track when each bot should be checked next. Key: Bot InstanceID
+    private readonly Dictionary<int, float> _botNextCheckTime = [];
+
+    protected void Update()
     {
-        FikaBot bot = (FikaBot)botOwner.GetPlayer;
-        if (!_bots.Remove(bot))
+        // If map is disabled via config, ensure all bots are active and do nothing else
+        if (!IsMapEnabled())
         {
-            _logger.LogWarning($"Could not remove {botOwner.gameObject.name} from bots list.");
+            if (_disabledBots.Count > 0)
+            {
+                EnabledChange(false); // Activates all disabled bots
+            }
+            return;
         }
 
-        if (_disabledBots.Contains(bot))
+        float time = Time.time;
+        float currentMapRange = GetRangeForCurrentMap();
+        float currentMapRangeSqr = currentMapRange * currentMapRange;
+
+        // Iterate backwards so we can safely handle potential removals if needed,
+        // though we generally modify _bots in event handlers. Use for-loop for performance.
+        for (int i = _bots.Count - 1; i >= 0; i--)
         {
-            _disabledBots.Remove(bot);
+            FikaBot bot = _bots[i];
+            
+            if (bot == null) 
+            {
+                _bots.RemoveAt(i);
+                continue;
+            }
+
+            int botId = bot.Id;
+            // Initialize check time if new
+            if (!_botNextCheckTime.TryGetValue(botId, out float nextCheck))
+            {
+                nextCheck = time + UnityEngine.Random.Range(0f, 0.5f); // Initial jitter to stagger
+                _botNextCheckTime[botId] = nextCheck;
+            }
+
+            if (time < nextCheck)
+            {
+                continue;
+            }
+
+            // Perform check
+            float distanceSqr = CheckForPlayers(bot, currentMapRangeSqr);
+
+            // Determine next check interval based on distance
+            // "Smart LOD": Far bots update less frequently
+            // Distances are Squared! 
+            // 400m^2 = 160,000
+            // 150m^2 = 22,500
+            
+            float interval;
+            if (distanceSqr > 250000) // > 500m
+            {
+                interval = 3.0f;
+            }
+            else if (distanceSqr > 40000) // > 200m
+            {
+                interval = 1.0f;
+            }
+            else if (distanceSqr > 4900) // > 70m
+            {
+                interval = 0.5f;
+            }
+            else // < 70m (Very close)
+            {
+                interval = 0.25f;
+            }
+
+            // Apply global rate multiplier
+            interval *= _rateMultiplier;
+
+             // Add small jitter to prevent clumping
+            _botNextCheckTime[botId] = time + interval + UnityEngine.Random.Range(0f, 0.1f);
         }
     }
 
@@ -245,30 +304,6 @@ public class FikaDynamicAIManager : MonoBehaviour
         };
     }
 
-    protected void Update()
-    {
-        // If map is disabled via config, ensure all bots are active and do nothing else
-        if (!IsMapEnabled())
-        {
-            if (_disabledBots.Count > 0)
-            {
-                EnabledChange(false); // Activates all disabled bots
-            }
-            return;
-        }
-
-        _frameCounter++;
-
-        if (_frameCounter % _resetCounter == 0)
-        {
-            _frameCounter = 0;
-            foreach (var bot in _bots)
-            {
-                CheckForPlayers(bot);
-            }
-        }
-    }
-
     private bool IsMapEnabled()
     {
         // Use cached config if available, otherwise default to true for modded maps
@@ -356,34 +391,53 @@ public class FikaDynamicAIManager : MonoBehaviour
         _disabledBots.Remove(bot);
     }
 
-    private void CheckForPlayers(FikaBot bot)
+    private void Spawner_OnBotRemoved(BotOwner botOwner)
+    {
+        FikaBot bot = (FikaBot)botOwner.GetPlayer;
+        if (!_bots.Remove(bot))
+        {
+             // Log warning only if verified bot exists... 
+             // actually standard remove is fine.
+        }
+        
+        // Clean up tracker
+        _botNextCheckTime.Remove(bot.Id);
+
+        if (_disabledBots.Contains(bot))
+        {
+            _disabledBots.Remove(bot);
+        }
+    }
+    
+    // Returns the closest distance squared to a human player
+    private float CheckForPlayers(FikaBot bot, float rangeSqr)
     {
         // Do not run on bots that have no initialized yet
         if (bot.AIData.BotOwner.BotState != EBotState.Active)
         {
-            return;
+            return 0f;
         }
 
         int notInRange = 0;
-        float range = GetRangeForCurrentMap();
+        // Start with a very large distance
+        float minDistanceSqr = float.MaxValue;
 
         foreach (var humanPlayer in _humanPlayers)
         {
-            if (humanPlayer == null)
+            if (humanPlayer == null || !humanPlayer.HealthController.IsAlive)
             {
                 notInRange++;
                 continue;
             }
 
-            if (!humanPlayer.HealthController.IsAlive)
+            float distanceSqr = Vector3.SqrMagnitude(bot.Position - humanPlayer.Position);
+            
+            if (distanceSqr < minDistanceSqr)
             {
-                notInRange++;
-                continue;
+                minDistanceSqr = distanceSqr;
             }
 
-            float distance = Vector3.SqrMagnitude(bot.Position - humanPlayer.Position);
-
-            if (distance > range * range)
+            if (distanceSqr > rangeSqr)
             {
                 notInRange++;
             }
@@ -397,6 +451,8 @@ public class FikaDynamicAIManager : MonoBehaviour
         {
             ActivateBot(bot);
         }
+        
+        return minDistanceSqr;
     }
 
 
@@ -467,12 +523,14 @@ public class FikaDynamicAIManager : MonoBehaviour
 
     internal void RateChanged(FikaDynamicAI_Plugin.EDynamicAIRates value)
     {
-        _resetCounter = value switch
+        // Low rate = Higher multiplier (Less frequent checks)
+        // High rate = Lower multiplier (More frequent checks)
+        _rateMultiplier = value switch
         {
-            FikaDynamicAI_Plugin.EDynamicAIRates.Low => 600,
-            FikaDynamicAI_Plugin.EDynamicAIRates.Medium => 300,
-            FikaDynamicAI_Plugin.EDynamicAIRates.High => 120,
-            _ => 300,
+            FikaDynamicAI_Plugin.EDynamicAIRates.Low => 1.5f,
+            FikaDynamicAI_Plugin.EDynamicAIRates.Medium => 1.0f,
+            FikaDynamicAI_Plugin.EDynamicAIRates.High => 0.5f,
+            _ => 1.0f,
         };
     }
 }
