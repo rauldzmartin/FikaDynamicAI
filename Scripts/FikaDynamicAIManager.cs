@@ -306,7 +306,7 @@ public class FikaDynamicAIManager : MonoBehaviour
         }
 
         int notInRange = 0;
-        float range = FikaDynamicAI_Plugin.DynamicAIRange.Value;
+        float range = GetRangeForCurrentMap();
 
         foreach (var humanPlayer in _humanPlayers)
         {
@@ -338,6 +338,26 @@ public class FikaDynamicAIManager : MonoBehaviour
         {
             ActivateBot(bot);
         }
+    }
+
+    private float GetRangeForCurrentMap()
+    {
+        string locationId = Singleton<GameWorld>.Instance.LocationId.ToLower();
+
+        return locationId switch
+        {
+            "factory4_day" or "factory4_night" => FikaDynamicAI_Plugin.RangeFactory.Value,
+            "bigmap" => FikaDynamicAI_Plugin.RangeCustoms.Value,
+            "woods" => FikaDynamicAI_Plugin.RangeWoods.Value,
+            "shoreline" => FikaDynamicAI_Plugin.RangeShoreline.Value,
+            "interchange" => FikaDynamicAI_Plugin.RangeInterchange.Value,
+            "rezervbase" => FikaDynamicAI_Plugin.RangeReserve.Value,
+            "lighthouse" => FikaDynamicAI_Plugin.RangeLighthouse.Value,
+            "tarkovstreets" => FikaDynamicAI_Plugin.RangeStreets.Value,
+            "sandbox" => FikaDynamicAI_Plugin.RangeGroundZero.Value,
+            "laboratory" => FikaDynamicAI_Plugin.RangeLabs.Value,
+            _ => FikaDynamicAI_Plugin.DynamicAIRange.Value
+        };
     }
 
     public void EnabledChange(bool value)

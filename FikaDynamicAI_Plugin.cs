@@ -39,6 +39,18 @@ internal class FikaDynamicAI_Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> EnableGroundZero { get; set; }
     public static ConfigEntry<bool> EnableLabs { get; set; }
 
+    // Map Range Settings
+    public static ConfigEntry<float> RangeFactory { get; set; }
+    public static ConfigEntry<float> RangeCustoms { get; set; }
+    public static ConfigEntry<float> RangeWoods { get; set; }
+    public static ConfigEntry<float> RangeShoreline { get; set; }
+    public static ConfigEntry<float> RangeInterchange { get; set; }
+    public static ConfigEntry<float> RangeReserve { get; set; }
+    public static ConfigEntry<float> RangeLighthouse { get; set; }
+    public static ConfigEntry<float> RangeStreets { get; set; }
+    public static ConfigEntry<float> RangeGroundZero { get; set; }
+    public static ConfigEntry<float> RangeLabs { get; set; }
+
     internal static void DynamicAIRate_SettingChanged(object sender, EventArgs e)
     {
         if (FikaDynamicAIManager.Instance != null)
@@ -110,6 +122,31 @@ internal class FikaDynamicAI_Plugin : BaseUnityPlugin
         EnableStreets = Config.Bind(mapHeader, "Streets", true, "Enable Dynamic AI on Streets");
         EnableGroundZero = Config.Bind(mapHeader, "Ground Zero", true, "Enable Dynamic AI on Ground Zero");
         EnableLabs = Config.Bind(mapHeader, "Labs", true, "Enable Dynamic AI on Labs");
+
+        // Map Range Settings
+        const string rangeHeader = "4. Map Distances";
+        RangeFactory = Config.Bind(rangeHeader, "Factory", 80f, "Enable range for Factory");
+        RangeLabs = Config.Bind(rangeHeader, "Labs", 120f, "Enable range for Labs");
+        RangeStreets = Config.Bind(rangeHeader, "Streets", 150f, "Enable range for Streets of Tarkov");
+        RangeGroundZero = Config.Bind(rangeHeader, "Ground Zero", 150f, "Enable range for Ground Zero");
+        RangeCustoms = Config.Bind(rangeHeader, "Customs", 180f, "Enable range for Customs");
+        RangeInterchange = Config.Bind(rangeHeader, "Interchange", 200f, "Enable range for Interchange");
+        RangeReserve = Config.Bind(rangeHeader, "Reserve", 250f, "Enable range for Reserve");
+        RangeShoreline = Config.Bind(rangeHeader, "Shoreline", 280f, "Enable range for Shoreline");
+        RangeWoods = Config.Bind(rangeHeader, "Woods", 350f, "Enable range for Woods");
+        RangeLighthouse = Config.Bind(rangeHeader, "Lighthouse", 400f, "Enable range for Lighthouse");
+
+        // Map Range Updates
+        RangeFactory.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeLabs.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeStreets.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeGroundZero.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeCustoms.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeInterchange.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeReserve.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeShoreline.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeWoods.SettingChanged += BotTypeFilter_SettingChanged;
+        RangeLighthouse.SettingChanged += BotTypeFilter_SettingChanged;
 
         new BotsController_SetSettings_Postfix().Enable();
         new BotsEventsController_SpawnAction_Postfix().Enable();
