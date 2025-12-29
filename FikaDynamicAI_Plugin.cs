@@ -73,7 +73,7 @@ internal class FikaDynamicAI_Plugin : BaseUnityPlugin
         // Bot Type Filters
         AffectScavs = Config.Bind(botTypesHeader, "Affect Scavs", true,
             new ConfigDescription("Whether Dynamic AI should affect regular Scavs."));
-        AffectPMCs = Config.Bind(botTypesHeader, "Affect PMCs", false,
+        AffectPMCs = Config.Bind(botTypesHeader, "Affect PMCs", true,
             new ConfigDescription("Whether Dynamic AI should affect PMC bots. Disable to let PMCs roam freely."));
         AffectRogues = Config.Bind(botTypesHeader, "Affect Rogues", false,
             new ConfigDescription("Whether Dynamic AI should affect Rogues (exUsec) at Lighthouse."));
@@ -81,7 +81,7 @@ internal class FikaDynamicAI_Plugin : BaseUnityPlugin
             new ConfigDescription("Whether Dynamic AI should affect Raiders."));
         AffectCultists = Config.Bind(botTypesHeader, "Affect Cultists", true,
             new ConfigDescription("Whether Dynamic AI should affect Cultists."));
-        AffectBosses = Config.Bind(botTypesHeader, "Affect Bosses", false,
+        AffectBosses = Config.Bind(botTypesHeader, "Affect Bosses", true,
             new ConfigDescription("Whether Dynamic AI should affect Boss characters."));
         AffectSnipers = Config.Bind(botTypesHeader, "Affect Snipers", false,
             new ConfigDescription("Whether Dynamic AI should affect Sniper Scavs (marksman)."));
